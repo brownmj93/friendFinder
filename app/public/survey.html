@@ -28,7 +28,7 @@
                         About You
                     </div>
                     <div class="card-body">
-                        <form role="form">
+                        <form role="form" id="aboutYouForm">
                             <div class="form-group">
                                 <label for="reserve-name">Name (Required)</label>
                                 <input type="text" class="form-control" id="name">
@@ -46,7 +46,7 @@
                         Questions
                     </div>
                     <div class="card-body">
-                        <form role="form">
+                        <form role="form" id="surveyForm">
                             <div class="form-group questions">
                             </div>
                             <button type="submit" class="btn btn-primary submit">Submit</button>
@@ -59,10 +59,32 @@
         <footer class="footer">
             <div class="container">
                 <p>
-                    <a href="#">API Friends List</a> | <a href="#">GitHub Repo</a>
+                    <a href="/api/friends">API Friends List</a> | <a href="#">GitHub Repo</a>
                 </p>
             </div>
         </footer>
+
+        <!--  Modal for compatible friend -->
+        <div class="modal fade" id="compatibleFriend" tabindex="-1" role="dialog"
+            aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="newFriendHeader">Best Match!</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="newFriendBody">
+                        <h5 id="matchName"></h5>
+                        <img id="matchPhoto" width = "100" height="auto"> 
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -107,26 +129,62 @@
         console.log(newFriend);
 
         $.post("/api/friends", newFriend,
-      function(data) {
+            function (data) {
 
-      
-        if (data) {
-          alert("Yay! You officially joined Friend Finder community!");
-        }
+                if (data) {
+                    console.log("Yay! You officially joined Friend Finder community!");
+                    findMatch();
+                    
 
-       
-        else {
-          alert("Sorry you couldn't be added to our community. Please try again!");
-        }
+                }
 
-        // Clear the form when submitting
-        $("#name").val("");
-        $("#photo").val("");
-        for (var i = 0; i < questions.length; i++) {
-            $("input[name='radioBtn_" + (i + 1) + "']").attr('checked', false);
-        }
+                else {
+                    console.log("Sorry you couldn't be added to our community. Please try again!");
+                }
 
-      });
+                // Clear the form when submitting
+                $("#aboutYouForm")[0].reset();
+                $("#surveyForm")[0].reset();
+            });
     });
+
+    function findMatch() {
+        // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
+        $.ajax({ url: "/api/friends", method: "GET" })
+            .then(function (friendsData) {
+
+                //Set up initial value to compare each score against
+                var difference = 50;
+                var newDiff = 0;
+                var userName = "";
+                var userScore = 0;
+                var matchName = "";
+                var matchPhoto = "";
+                console.log(friendsData);
+                // Loop through the array to find the best match
+                for (var i = 0; i < friendsData.length-1; i++) {
+                    //Set user name & score
+                    userName = friendsData[friendsData.length-1].name
+                    userScore = friendsData[friendsData.length-1].scores
+
+                    newDiff = Math.abs(friendsData[i].scores - userScore);
+                    console.log("userScore: " + userScore);
+                    console.log("friendScore: " + friendsData[i].scores);
+                    console.log("newDiff: " + newDiff );
+                    if (newDiff < difference) {
+                        difference = newDiff; 
+                        matchName = friendsData[i].name;
+                        matchPhoto = friendsData[i].photo;
+                        $("#matchName").text(matchName);
+                        $("#matchPhoto").attr("src", matchPhoto);
+                    }
+                    else {
+
+                    }
+                }
+                $("#compatibleFriend").modal();
+                
+            });
+    }
 
 </script>
