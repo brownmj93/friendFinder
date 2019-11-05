@@ -59,7 +59,8 @@
         <footer class="footer">
             <div class="container">
                 <p>
-                    <a href="/api/friends">API Friends List</a> | <a href="#">GitHub Repo</a>
+                    <a href="/api/friends">API Friends List</a> | <a
+                        href="https://github.com/brownmj93/friendFinder">GitHub Repo</a>
                 </p>
             </div>
         </footer>
@@ -71,13 +72,13 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h3 class="modal-title" id="newFriendHeader">Best Match!</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                     </div>
                     <div class="modal-body" id="newFriendBody">
                         <h5 id="matchName"></h5>
-                        <img id="matchPhoto" width = "100" height="auto"> 
+                        <img id="matchPhoto" width="100" height="auto">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -92,16 +93,17 @@
 
 </html>
 
-<!-- BELOW CODE IS CRITICAL. IT HANDLES HOW FORM DATA IS SENT TO OUR SERVER -->
+
 <script type="text/javascript">
 
+    // Declare variables to hold values to store in server
     var questions = ["I see myself as extraverted, enthusiastic.", "I see myself as critical, quarrelsome.", "I see myself as dependable, self-disciplined.", "I see myself as anxious, easily upset.", "I see myself as open to new experiences, complex.", "I see myself as reserved, quiet.", "I see myself as sympathetic, warm.", "I see myself as disorganized, careless.", "I see myself as calm, emotionally stable.", "I see myself as conventional, uncreative."];
 
     var answers = [" Strongly Disagree", " Slightly Disagree", " Neither Agree nor Disagree", " Slightly Agree", " Strongly Agree"];
 
     var scores = [];
 
-    //Loop through the questions & answer choices
+    //Loop through the questions & answer choices to display on page
     for (i = 0; i < questions.length; i++) {
         //console.log(questions.indexOf(questions[i]));
         $(".questions").append("<h5>Question " + (questions.indexOf(questions[i]) + 1) + "</h5>");
@@ -113,41 +115,58 @@
         $(".questions").append("<br>");
     };
 
+    // Submit button event handler
     $(".submit").on("click", function (event) {
         event.preventDefault();
-        console.log("button works");
-        for (var i = 0; i < questions.length; i++) {
-            scores.push(parseInt($("input[name='radioBtn_" + (i + 1) + "']:checked").val()));
+
+        //Check to see if name & link to photo has been entered
+        if (($("#name").val() == "") || ($("#photo").val() == "")) {
+            alert("Oops! You forgot to enter either a name or photo link or both!");
         }
-        console.log(scores);
-        var newFriend = {
-            name: $("#name").val().trim(),
-            photo: $("#photo").val().trim(),
-            scores: scores.reduce((a, b) => a + b, 0)
-        };
-
-        console.log(newFriend);
-
-        $.post("/api/friends", newFriend,
-            function (data) {
-
-                if (data) {
-                    console.log("Yay! You officially joined Friend Finder community!");
-                    findMatch();
-                    
-
+        //What happens when name & link are both in
+        else {
+            for (var i = 0; i < questions.length; i++) {
+                //If user didn't select a radiobutton, default to 0 as score
+                if (!$("input[name='radioBtn_" + (i + 1) + "']:checked").val()) {
+                    scores.push(0);
                 }
-
                 else {
-                    console.log("Sorry you couldn't be added to our community. Please try again!");
+                    scores.push(parseInt($("input[name='radioBtn_" + (i + 1) + "']:checked").val()));
                 }
+            }
+            console.log(scores);
+            //Store user into into an object
+            var newFriend = {
+                name: $("#name").val().trim(),
+                photo: $("#photo").val().trim(),
+                scores: scores.reduce((a, b) => a + b, 0)
+            };
 
-                // Clear the form when submitting
-                $("#aboutYouForm")[0].reset();
-                $("#surveyForm")[0].reset();
-            });
+            console.log(newFriend);
+
+            //Send the newFriend data into friends data
+            $.post("/api/friends", newFriend,
+                function (data) {
+
+                    //If user was successfully added, find a match
+                    if (data) {
+                        findMatch();
+                    }
+
+                    else {
+                        alert("Sorry you couldn't be added to our community. Please try again!");
+                    }
+
+                    // Clear the form 
+                    $("#aboutYouForm")[0].reset();
+                    $("#surveyForm")[0].reset();
+                });
+        }
+
+
     });
 
+    //Function to find a best match
     function findMatch() {
         // The AJAX function uses the URL of our API to GET the data associated with it (initially set to localhost)
         $.ajax({ url: "/api/friends", method: "GET" })
@@ -161,18 +180,23 @@
                 var matchName = "";
                 var matchPhoto = "";
                 console.log(friendsData);
-                // Loop through the array to find the best match
-                for (var i = 0; i < friendsData.length-1; i++) {
-                    //Set user name & score
-                    userName = friendsData[friendsData.length-1].name
-                    userScore = friendsData[friendsData.length-1].scores
 
+                // Loop through the array to find the best match
+                for (var i = 0; i < friendsData.length - 1; i++) {
+
+                    //Set user name & score
+                    userName = friendsData[friendsData.length - 1].name
+                    userScore = friendsData[friendsData.length - 1].scores
+
+                    //Compare each friend in an array to new user and get an absolute value
                     newDiff = Math.abs(friendsData[i].scores - userScore);
                     console.log("userScore: " + userScore);
                     console.log("friendScore: " + friendsData[i].scores);
-                    console.log("newDiff: " + newDiff );
+                    console.log("newDiff: " + newDiff);
+
+                    //If the current friend in array has smaller absolute value than the previous, store that info
                     if (newDiff < difference) {
-                        difference = newDiff; 
+                        difference = newDiff;
                         matchName = friendsData[i].name;
                         matchPhoto = friendsData[i].photo;
                         $("#matchName").text(matchName);
@@ -182,8 +206,10 @@
 
                     }
                 }
+
+                //Use modal to display best match
                 $("#compatibleFriend").modal();
-                
+
             });
     }
 
