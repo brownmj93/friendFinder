@@ -18,6 +18,7 @@
     - Link to GitHub
         https://github.com/brownmj93/friendFinder
     - Link to Heroku
+        https://limitless-coast-09811.herokuapp.com/
 
 ## Technologies used
     * node.js
